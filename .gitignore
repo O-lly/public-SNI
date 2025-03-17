@@ -6,3 +6,6 @@ reddit_media/
 
 # Ignorar o arquivo checked_posts
 checked_posts.txt
+
+# Ignorar o pycache
+__pycache__/
