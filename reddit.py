@@ -94,7 +94,7 @@ def check_posts(limit=1):
         
         print("-" * 30)
 
-        UNCHECKED_POSTS.append(post.id)
+        UNCHECKED_POSTS.append((post.id, post.author.name, post.title, post.selftext))
 
         with open(CHECKED_PATH, "w") as checked_posts_file:
             checked_posts_file.write(post.id + "\n")
