@@ -4,7 +4,7 @@ import os
 import json
 
 
-CREDENTIALS_PATH="reddit_credentials.json"
+CREDENTIALS_PATH="credentials/reddit_credentials.json"
 with open(CREDENTIALS_PATH, "r") as credentials_file:
     credentials = json.load(credentials_file)
 
@@ -94,7 +94,12 @@ def check_posts(limit=1):
         
         print("-" * 30)
 
-        UNCHECKED_POSTS.append((post.id, post.author.name, post.title, post.selftext))
+        UNCHECKED_POSTS.append(
+                {"id":post.id,
+                 "author":post.author.name,
+                 "title": post.title,
+                 "content": post.selftext
+                 })
 
         with open(CHECKED_PATH, "w") as checked_posts_file:
             checked_posts_file.write(post.id + "\n")

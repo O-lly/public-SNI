@@ -33,20 +33,47 @@ def send_post(post):
     author = post["author"]
     title = post["title"]
     content = post["content"]
-    attachment=[]
+    attachments=[]
 
     # Lista todos os arquivos no diretório
     media_files = os.listdir(MEDIA_PATH)
 
     for file_name in media_files:
         if id in file_name:
-            attachment.append(file_name)
+            attachments.append(file_name)
     
-    for file in attachment:
-        media = api_v1.media_upload(file)
-    
+    # Divide os arquivos em grupos de 4 (limite do Twitter)
+    media_chunks = [attachments[i:i+4] for i in range(0, len(attachments), 4)]
+
+    # Enviar o primeiro chunck no principal
+    media_ids=[]
+    for file in media_chunks[0]:
+        media = api_v1.media_upload(f"{MEDIA_PATH}/{file}")
+        media_ids.append(media.media_id)
+
     # Postar tweet com mídia usando API v2
     tweet_text = title
-    response = client.create_tweet(text=tweet_text, media_ids=[media.media_id])
+    response = client.create_tweet(text=tweet_text, media_ids=media_ids)
+    main_tweet_id = response.data["id"]
+    print("✅ Tweet principal postado:", response.data)
+
+    # Postar tweets de resposta com os chuncks adicionais
+    for chunk_index, chunk in enumerate(media_chunks[1:], start=1):
+        media_ids=[]
+        for file in chunk:
+            media = api_v1.media_upload(f"{MEDIA_PATH}/{file}")
+            media_ids.append(media.media_id)
+        
+        # Texto opcional nos tweets de resposta
+        reply_text = ""
+
+        # Criar o tweet como uma resposta ao principal
+        response = client.create_tweet(
+            text=reply_text,
+            media_ids=media_ids,
+            in_reply_to_tweet_id=main_tweet_id
+        )
+
+        print(f"✅ Resposta postada (parte {chunk_index}):", response.data)
 
     print("✅ Tweet postado:", response.data)
