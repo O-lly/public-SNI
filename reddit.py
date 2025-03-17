@@ -1,11 +1,17 @@
 import praw
 import requests
 import os
+import json
+
+
+CREDENTIALS_PATH="reddit_credentials.json"
+with open(CREDENTIALS_PATH, "r") as credentials_file:
+    credentials = json.load(credentials_file)
 
 # Credenciais do Reddit
-CLIENT_ID=""
-CLIENT_SECRET=""
-USER_AGENT=""
+CLIENT_ID=credentials["client_id"]
+CLIENT_SECRET=credentials["client_secret"]
+USER_AGENT=credentials["user_agent"]
 
 # Inicializa o PRAW
 reddit = praw.Reddit(
@@ -31,11 +37,11 @@ checked_posts = set()
 if os.path.exists(CHECKED_PATH):
     with open(CHECKED_PATH, "r") as file:
         # Converte em conjunto para busca rápida
-        checked_posts = set(file.read().splitlines)
+        checked_posts = set(file.read().splitlines())
 
 
 # Função para checar posts
-def check_posts(limit: int):
+def check_posts(limit=1):
     for post in subreddit.new(limit=limit):
 
         if post.id in checked_posts:
@@ -51,7 +57,7 @@ def check_posts(limit: int):
         if post.url.endswith((".jpg", ".jpeg", ".png", ".gif", ".mp4")):
             file_extension = os.path.splitext(post.url)[-1]
             media_url = post.url
-            media_name = f"{MEDIA_PATH}_{file_extension}"
+            media_name = f"{MEDIA_PATH}/{post.id}_{file_extension}"
 
             # Baixa mídia
             response = requests.get(media_url)
@@ -90,7 +96,7 @@ def check_posts(limit: int):
 
         UNCHECKED_POSTS.append(post.id)
 
-        with open(checked_posts, "w") as checked_posts_file:
+        with open(CHECKED_PATH, "w") as checked_posts_file:
             checked_posts_file.write(post.id + "\n")
 
     return UNCHECKED_POSTS
