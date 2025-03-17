@@ -2,6 +2,14 @@ import praw
 import requests
 import os
 import json
+import re
+
+# Função para remover caracteres inválidos e extrair somente a parte útil do URL
+def sanitize_filename(filename):
+    # Se existir uma query na URL, extraia apenas a parte antes do '?'
+    if '?' in filename:
+        filename = filename.split('?')[0]
+    return filename
 
 
 CREDENTIALS_PATH="credentials/reddit_credentials.json"
@@ -21,7 +29,7 @@ reddit = praw.Reddit(
 )
 
 # Escolhe subreddit
-subreddit = reddit.subreddit("HonkaiStarRail_leaks")
+subreddit = reddit.subreddit("HonkaiStarRail")
 
 # Cria pasta para salvar mídia
 MEDIA_PATH = "reddit_media"
@@ -42,7 +50,7 @@ if os.path.exists(CHECKED_PATH):
 
 # Função para checar posts
 def check_posts(limit=1):
-    for post in subreddit.new(limit=limit):
+    for post in subreddit.hot(limit=limit):
 
         if post.id in checked_posts:
             print(f"Post já visualizado: {post.id}")
@@ -58,6 +66,7 @@ def check_posts(limit=1):
             file_extension = os.path.splitext(post.url)[-1]
             media_url = post.url
             media_name = f"{MEDIA_PATH}/{post.id}_{file_extension}"
+            media_name = sanitize_filename(media_name)
 
             # Baixa mídia
             response = requests.get(media_url)
@@ -79,6 +88,7 @@ def check_posts(limit=1):
 
                     # Arquivo de saída
                     media_name = f"{MEDIA_PATH}/{post.id}_{index+1}.{file_extension}"
+                    media_name = sanitize_filename(media_name)
 
                     response = requests.get(media_url)
                     with open(media_name, "wb") as media_file:
