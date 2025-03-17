@@ -65,7 +65,7 @@ def check_posts(limit=1):
                 media_file.write(response.content)
             
             saved_media += 1
-            print(f"Mídia salva: {media_name}")
+            print(f"✅ Mídia salva: {media_name}")
         
         # Se o post conter mais de uma mídia
         elif hasattr(post, "gallery_data") and post.gallery_data:
@@ -84,13 +84,13 @@ def check_posts(limit=1):
                     with open(media_name, "wb") as media_file:
                         media_file.write(response.content)
                     
-                    print(f"Mídia salva: {media_name}")
+                    print(f"✅ Mídia salva: {media_name}")
                 
                 else:
-                    print(f"Erro ao obter mídia para {media_id}")
+                    print(f"⚠️ Erro ao obter mídia para {media_id}")
         
         if saved_media == 0:
-            print("Não foi encontrada mídia para esse post")
+            print("⚠️ Não foi encontrada mídia para esse post")
         
         print("-" * 30)
 

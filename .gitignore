@@ -1,0 +1,8 @@
+# Ignorar a pasta credentials
+credentials/
+
+# Ignorar a pasta reddit_media
+reddit_media/
+
+# Ignorar o arquivo checked_posts
+checked_posts.txt
