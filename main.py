@@ -1,4 +1,4 @@
-import reddit, twitter, os
+import reddit, twitter, mail, os
 
 POSTS_FILE="twitter_posted.txt"
 
@@ -20,5 +20,8 @@ def run():
 
             with open(POSTS_FILE, "a") as posts_file:
                 posts_file.write(f"\n{post["id"]}")
+
+            email_text="Olá,\n\nHá um novo post no Reddit."
+            mail.send_email(subject=post["title"], content=email_text)
 
 run()

@@ -101,7 +101,7 @@ def check_posts(limit=1):
                  "content": post.selftext
                  })
 
-        with open(CHECKED_PATH, "w") as checked_posts_file:
+        with open(CHECKED_PATH, "a") as checked_posts_file:
             checked_posts_file.write(post.id + "\n")
 
     return UNCHECKED_POSTS
