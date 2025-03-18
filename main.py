@@ -1,6 +1,7 @@
 import reddit, twitter, mail, schedule, time, os
 
 RUNNING=True
+TIME=0
 POSTS_FILE="twitter_posted.txt"
 
 # Lê arquivo de posts já publicados
@@ -17,6 +18,8 @@ def run():
     # Se houver posts novos, deve executar o passo do Twitter/X e Email
     for post in posts:
         if post["id"] not in twitter_post_list:
+            time.sleep(1)
+            
             twitter.send_post(post)
 
             with open(POSTS_FILE, "a") as posts_file:
@@ -26,15 +29,14 @@ def run():
             mail.send_email(subject=post["title"], content=email_text)
 
 
-# Agenda a tarefa para executar a cada 2 minutos
-schedule.every(2).minutes.do(run())
+# Agenda a tarefa para executar a cada 1 minuto
+schedule.every(1).minutes.do(run)
 
 while RUNNING:
-    tempo = 0
     schedule.run_pending() # Executa a rotina se o horário for atingido
-    time.sleep(2)
-    tempo += 2
-    if tempo % 10 == 0: 
-        print(f"tempo decorrido: {tempo} segundos")
-    if tempo > 200:
+    time.sleep(1)
+    TIME += 1
+    if TIME % 10 == 0: 
+        print(f"tempo decorrido: {TIME} segundos")
+    if TIME > 200:
         RUNNING=False
