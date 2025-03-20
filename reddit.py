@@ -32,24 +32,23 @@ reddit = praw.Reddit(
 subreddit = reddit.subreddit("HonkaiStarRail")
 
 # Cria pasta para salvar mídia
-MEDIA_PATH = "reddit_media"
+MEDIA_PATH = "media/reddit"
 os.makedirs(MEDIA_PATH, exist_ok=True)
 
 # Caminho do arquivo que armazena os IDs de posts já visualizados
-CHECKED_PATH = "checked_posts.txt"
-UNCHECKED_POSTS = []
+CHECKED_POSTS_PATH = "history/reddit_checked_posts.txt"
+if not os.path.exists(CHECKED_POSTS_PATH):
+    open(CHECKED_POSTS_PATH, "w").close()
 
 checked_posts = set()
 
-# Carrega IDs de posts já verificados
-if os.path.exists(CHECKED_PATH):
-    with open(CHECKED_PATH, "r") as file:
-        # Converte em conjunto para busca rápida
-        checked_posts = set(file.read().splitlines())
-
-
 # Função para checar posts
 def check_posts(limit=1):
+    UNCHECKED_POSTS = []
+
+    with open(CHECKED_POSTS_PATH, "r") as checked_posts_file:
+        checked_posts=checked_posts_file.read().splitlines()
+
     for post in subreddit.hot(limit=limit):
 
         if post.id in checked_posts:
@@ -111,7 +110,7 @@ def check_posts(limit=1):
                  "content": post.selftext
                  })
 
-        with open(CHECKED_PATH, "a") as checked_posts_file:
+        with open(CHECKED_POSTS_PATH, "a") as checked_posts_file:
             checked_posts_file.write(post.id + "\n")
 
     return UNCHECKED_POSTS
