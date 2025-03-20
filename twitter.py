@@ -1,6 +1,6 @@
 import tweepy, json, os
 
-MEDIA_PATH="reddit_media"
+REDDIT_MEDIA_PATH="media/reddit"
 
 HISTORY_PATH="history/twitter"
 os.makedirs(HISTORY_PATH, exist_ok=True)
@@ -46,7 +46,7 @@ def send_post(post):
     media_chunks=[]
 
     # Lista todos os arquivos no diretório
-    media_files = os.listdir(MEDIA_PATH)
+    media_files = os.listdir(REDDIT_MEDIA_PATH)
 
     for file_name in media_files:
         if id in file_name:
@@ -59,7 +59,7 @@ def send_post(post):
         # Enviar o primeiro chunck no principal
         if media_chunks and len(media_chunks) > 0:
             for file in media_chunks[0]:
-                media = api_v1.media_upload(f"{MEDIA_PATH}/{file}")
+                media = api_v1.media_upload(f"{REDDIT_MEDIA_PATH}/{file}")
                 media_ids.append(media.media_id)
         else:
             print("Nenhum chunk de mídia encontrado")
@@ -81,7 +81,7 @@ def send_post(post):
     if len(media_chunks) > 1:
         for chunk_index, chunk in enumerate(media_chunks[1:], start=1):
             for file in chunk:
-                media = api_v1.media_upload(f"{MEDIA_PATH}/{file}")
+                media = api_v1.media_upload(f"{REDDIT_MEDIA_PATH}/{file}")
                 media_ids.append(media.media_id)
             
             # Texto opcional nos tweets de resposta
