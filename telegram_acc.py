@@ -64,7 +64,13 @@ async def collect_messages(chat_identifier, limit=1):
 
 async def send_message(chat_identifier, message_text="", media_gallery=[]):
     await start_session()
-    await client.send_message(chat_identifier, message_text)
+    
+    if media_gallery:
+        media_files = [await client.upload_file(media) for media in media_gallery]
+        await client.send_file(chat_identifier, media_files, caption=message_text)
+    else:
+        await client.send_message(chat_identifier, message_text)
+
     print("✅ Mensagem enviada com sucesso!")
     await end_session()
 
@@ -92,5 +98,3 @@ async def collect_new_posts(chat_identifier, limit=1):
         checked_posts_file.write(f"{message.id}\n")
     
     await end_session()
-
-asyncio.run(collect_new_posts(-4795461865))
