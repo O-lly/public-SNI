@@ -1,42 +1,90 @@
-import reddit, twitter, mail, schedule, time, os
+import reddit, twitter, mail, schedule, time, os, telegram_acc, asyncio 
 
 RUNNING=True
-TIME=0
-POSTS_FILE="twitter_posted.txt"
 
-# Lê arquivo de posts já publicados
-if not os.path.exists(POSTS_FILE):
-    with open(POSTS_FILE, "w") as posts_file:
-        pass # Se não existir, cria arquivo vazio
+TWITTER_POSTS_FILE=twitter.CHECKED_POSTS_PATH
+REDDIT_POSTS_FILE=reddit.CHECKED_POSTS_PATH
+TELEGRAM_POSTS_FILE=telegram_acc.CHECKED_POSTS_PATH
 
-with open(POSTS_FILE, "r") as posts_file:
-    twitter_post_list = posts_file.read().splitlines()
+REDDIT_TELEGRAM=False
+REDDIT_TWITTER=False
+TWITTER_TELEGRAM=False
+TELEGRAM_TWITTER=False
 
-def run():
-    posts = reddit.check_posts(3) # Verifica se há novos posts no Reddit
 
-    # Se houver posts novos, deve executar o passo do Twitter/X e Email
+async def monitor_twitter_telegram():
+    return
+
+async def monitor_telegram_twitter():
+    return
+
+async def monitor_reddit_twitter(limit=3):
+    with open(TWITTER_POSTS_FILE, "r") as twitter_posts_file:
+        twitter_post_list=twitter_posts_file.read().splitlines()
+
+    posts=reddit.check_posts(limit)
+    # Se houver posts novos no reddit, deve executar o passo do Twitter
     for post in posts:
         if post["id"] not in twitter_post_list:
             time.sleep(1)
-            
             twitter.send_post(post)
+            with open(TWITTER_POSTS_FILE, "a") as twitter_posts_file:
+                twitter_posts_file.write(f"{post['id']}\n")
+    return
 
-            with open(POSTS_FILE, "a") as posts_file:
-                posts_file.write(f"{post["id"]}\n")
+async def monitor_reddit_telegram():
+    return
 
-            email_text="Olá,\n\nHá um novo post no Reddit."
-            mail.send_email(subject=post["title"], content=email_text)
+async def menu():
+    global REDDIT_TELEGRAM, REDDIT_TWITTER, TWITTER_TELEGRAM, TELEGRAM_TWITTER
+    print("Opções\n",
+          "\t1. Ativar monitoramento Reddit-Telegram\n",
+          "\t2. Ativar monitoramento Reddit-Twitter\n",
+          "\t3. Ativar monitoramento Twitter-Telegram\n",
+          "\t4. Ativar monitoramento Telegram-Twitter\n")
+    
+    op = int(input("Opção: "))
 
+    match op:
+        case 1:
+            print("Ativando monitoramento Reddit-Telegram")
+            REDDIT_TELEGRAM=True
+        case 2:
+            print("Ativando monitoramento Reddit-Twitter")
+            REDDIT_TWITTER=True
+        case 3:
+            print("Ativando monitoramento Twitter-Telegram")
+            TWITTER_TELEGRAM=True
+        case 4:
+            print("Ativando monitoramento Telegram-Twitter")
+            TELEGRAM_TWITTER=True
+        case _:
+            print("Opção inválida. Encerrando programa.")
+            exit()
+            
 
-# Agenda a tarefa para executar a cada 1 minuto
-schedule.every(1).minutes.do(run)
+async def run():
+    if REDDIT_TELEGRAM: await monitor_reddit_telegram()
+    if REDDIT_TWITTER: await monitor_reddit_twitter()
+    if TWITTER_TELEGRAM: await monitor_twitter_telegram()
+    if TELEGRAM_TWITTER: await monitor_telegram_twitter()
 
-while RUNNING:
-    schedule.run_pending() # Executa a rotina se o horário for atingido
-    time.sleep(1)
-    TIME += 1
-    if TIME % 10 == 0: 
-        print(f"tempo decorrido: {TIME} segundos")
-    if TIME > 200:
-        RUNNING=False
+async def schedule_tasks():
+    tempo = 0
+    while RUNNING:
+        tempo += 1
+        schedule.run_pending()
+        await asyncio.sleep(1)
+        if tempo % 10 == 0:
+            print(f"Tempo: {tempo} segundos.")
+        if tempo == 200:
+            break
+
+async def main():
+    await menu()
+    # Agenda a execução da função run
+    schedule.every(1).minutes.do(lambda: asyncio.create_task(run()))
+    await schedule_tasks()  
+
+if __name__ == "__main__":
+    asyncio.run(main())  # ✅ Chama `asyncio.run()` apenas aqui
