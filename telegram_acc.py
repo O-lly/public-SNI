@@ -1,6 +1,10 @@
 import asyncio, json, os
 from telethon import TelegramClient
 
+SESSION_DIR="credentials/sessions/telegram"
+if not os.path.exists(SESSION_DIR):
+    os.makedirs(SESSION_DIR, exist_ok=True)
+
 # Credenciais do Telegram
 CREDENTIALS_PATH="credentials/telegram_acc.json"
 with open(CREDENTIALS_PATH, "r") as credentials_file:
@@ -12,7 +16,7 @@ SESSION_NAME=credentials["session_name"]
 PHONE=credentials["phone"]
 
 # Cria o cliente do Telegram
-client = TelegramClient(SESSION_NAME, API_ID, API_HASH)
+client = TelegramClient(f"{SESSION_DIR}/{SESSION_NAME}", API_ID, API_HASH)
 
 # Arquivo para armazenar media
 MEDIA_PATH="media/telegram"
