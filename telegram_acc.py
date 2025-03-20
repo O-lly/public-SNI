@@ -2,8 +2,10 @@ import asyncio, json, os
 from telethon import TelegramClient
 
 SESSION_DIR="credentials/sessions/telegram"
-if not os.path.exists(SESSION_DIR):
-    os.makedirs(SESSION_DIR, exist_ok=True)
+os.makedirs(SESSION_DIR, exist_ok=True)
+
+HISTORY_PATH="history/telegram"
+os.makedirs(HISTORY_PATH, exist_ok=True)
 
 # Credenciais do Telegram
 CREDENTIALS_PATH="credentials/telegram_acc.json"
@@ -23,7 +25,7 @@ MEDIA_PATH="media/telegram"
 os.makedirs(MEDIA_PATH, exist_ok=True)
 
 # Armazena id de posts já visualizados
-CHECKED_POSTS_PATH="telegram_checked_posts.txt"
+CHECKED_POSTS_PATH="history/telegram/telegram_checked_posts.txt"
 if not os.path.exists(CHECKED_POSTS_PATH):
     open(CHECKED_POSTS_PATH, "w").close()
 

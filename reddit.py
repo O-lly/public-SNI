@@ -11,6 +11,8 @@ def sanitize_filename(filename):
         filename = filename.split('?')[0]
     return filename
 
+HISTORY_PATH="history/reddit"
+os.makedirs(HISTORY_PATH, exist_ok=True)
 
 CREDENTIALS_PATH="credentials/reddit_credentials.json"
 with open(CREDENTIALS_PATH, "r") as credentials_file:
@@ -36,7 +38,7 @@ MEDIA_PATH = "media/reddit"
 os.makedirs(MEDIA_PATH, exist_ok=True)
 
 # Caminho do arquivo que armazena os IDs de posts já visualizados
-CHECKED_POSTS_PATH = "history/reddit_checked_posts.txt"
+CHECKED_POSTS_PATH = "history/reddit/reddit_checked_posts.txt"
 if not os.path.exists(CHECKED_POSTS_PATH):
     open(CHECKED_POSTS_PATH, "w").close()
 
