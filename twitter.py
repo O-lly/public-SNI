@@ -2,6 +2,13 @@ import tweepy, json, os
 
 MEDIA_PATH="reddit_media"
 
+HISTORY_PATH="history/twitter"
+os.makedirs(HISTORY_PATH, exist_ok=True)
+
+CHECKED_POSTS_PATH=f"{HISTORY_PATH}/twitter_checked_posts.txt"
+if not os.path.exists(CHECKED_POSTS_PATH):
+    open(CHECKED_POSTS_PATH, "w").close()
+
 # Credenciais do Twitter/X
 CREDENTIALS_PATH="credentials/twitter_credentials.json"
 with open(CREDENTIALS_PATH, "r") as credentials_file:
