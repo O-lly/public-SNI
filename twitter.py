@@ -35,65 +35,44 @@ client = tweepy.Client(
     access_token_secret=ACCESS_TOKEN_SECRET
 )
 
-def send_post(post):
-    id = post["id"]
-    author = post["author"]
-    title = post["title"]
-    content = post["content"]
-    attachments=[]
-    
-    media_ids=[]
-    media_chunks=[]
+def send_post(content="", media_gallery=[]):
+    media_ids = []
+    media_chunks = []
 
-    # Lista todos os arquivos no diretório
-    media_files = os.listdir(REDDIT_MEDIA_PATH)
+    # Verifica se há mídia e divide em grupos de até 4 (limite do Twitter)
+    if media_gallery:
+        media_chunks = [media_gallery[i:i+4] for i in range(0, len(media_gallery), 4)]
 
-    for file_name in media_files:
-        if id in file_name:
-            attachments.append(file_name)
-    
-    if attachments: # Verifica se attachments não está vazia
-        # Divide os arquivos em grupos de 4 (limite do Twitter)
-        media_chunks = [attachments[i:i+4] for i in range(0, len(attachments), 4)]
+    # Enviar o primeiro grupo de mídia com o tweet principal
+    if media_chunks:
+        for media_path in media_chunks[0]:
+            media = api_v1.media_upload(media_path)
+            media_ids.append(media.media_id)
 
-        # Enviar o primeiro chunck no principal
-        if media_chunks and len(media_chunks) > 0:
-            for file in media_chunks[0]:
-                media = api_v1.media_upload(f"{REDDIT_MEDIA_PATH}/{file}")
-                media_ids.append(media.media_id)
-        else:
-            print("Nenhum chunk de mídia encontrado")
+    # Posta o tweet principal
+    if media_ids:
+        response = client.create_tweet(text=content, media_ids=media_ids)
     else:
-        print("Nenhum anexo encontrado, pulando upload de mídia")
+        response = client.create_tweet(text=content)
 
-    # Postar tweet com mídia usando API v2
-    tweet_text = title
-
-    if media_ids:  # Se houver pelo menos um media_id
-        response = client.create_tweet(text=tweet_text, media_ids=media_ids)
-    else:
-        response = client.create_tweet(text=tweet_text)
-
-    main_tweet_id = response.data["id"]
     print("✅ Tweet principal postado:", response.data)
+    main_tweet_id = response.data["id"]
 
-    # Postar tweets de resposta com os chuncks adicionais
+    # Postar tweets de resposta com os grupos de mídia adicionais (se houver)
     if len(media_chunks) > 1:
         for chunk_index, chunk in enumerate(media_chunks[1:], start=1):
-            for file in chunk:
-                media = api_v1.media_upload(f"{REDDIT_MEDIA_PATH}/{file}")
+            media_ids = []  # Resetar lista de media_ids para cada resposta
+            for media_path in chunk:
+                media = api_v1.media_upload(media_path)
                 media_ids.append(media.media_id)
             
-            # Texto opcional nos tweets de resposta
-            reply_text = ""
-
-            # Criar o tweet como uma resposta ao principal
             response = client.create_tweet(
-                text=reply_text,
+                text="",  # Deixa em branco para não repetir conteúdo
                 media_ids=media_ids,
                 in_reply_to_tweet_id=main_tweet_id
             )
 
             print(f"✅ Resposta postada (parte {chunk_index}):", response.data)
+            main_tweet_id = response.data["id"]  # Atualiza ID para o próximo reply
 
-    print("✅ Tweet postado:", response.data)
+    return response.data
