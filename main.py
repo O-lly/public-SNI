@@ -1,4 +1,4 @@
-import reddit, twitter, mail, schedule, time, os, telegram_acc, asyncio 
+import reddit, twitter, mail, schedule, time, os, telegram_acc, asyncio, json
 
 RUNNING=True
 
@@ -6,68 +6,60 @@ TWITTER_POSTS_FILE=twitter.CHECKED_POSTS_PATH
 REDDIT_POSTS_FILE=reddit.CHECKED_POSTS_PATH
 TELEGRAM_POSTS_FILE=telegram_acc.CHECKED_POSTS_PATH
 
-REDDIT_TELEGRAM=False
-REDDIT_TWITTER=False
-TWITTER_TELEGRAM=False
-TELEGRAM_TWITTER=False
+CONFIG_FILE="config/config.json"
+with open(CONFIG_FILE, "r") as config_file:
+    config=json.load(config_file)
 
+REDDIT_RECEIVE=config["reddit_receive"]
+TWITTER_RECEIVE=config["twitter_receive"]
+TELEGRAM_RECEIVE=config["telegram_receive"]
 
-async def monitor_twitter_telegram():
-    return
+TWITTER_SEND=config["twitter_send"]
+TELEGRAM_SEND=config["telegram_send"]
+EMAIL_SEND=config["email_send"]
 
-async def monitor_telegram_twitter():
-    return
+async def twitter_send_macro(post, self_posts):
+    if post["id"] not in self_posts:
+        time.sleep(1)
+        twitter.send_post(post)
+        with open(TWITTER_POSTS_FILE, "a") as twitter_posts_file:
+            twitter_posts_file.write(f"{post['id']}\n")
 
-async def monitor_reddit_twitter(limit=3):
-    with open(TWITTER_POSTS_FILE, "r") as twitter_posts_file:
-        twitter_post_list=twitter_posts_file.read().splitlines()
+async def mail_send_macro(subject, text):
+    mail.send_email(subject=subject, content=text)
 
-    posts=reddit.check_posts(limit)
-    # Se houver posts novos no reddit, deve executar o passo do Twitter
-    for post in posts:
-        if post["id"] not in twitter_post_list:
-            time.sleep(1)
-            twitter.send_post(post)
-            with open(TWITTER_POSTS_FILE, "a") as twitter_posts_file:
-                twitter_posts_file.write(f"{post['id']}\n")
-    return
+async def monitor():
+    twitter_post_list = []
+    telegram_post_list = []
+    # Verifica posts já enviados para redes sob condição de executar o monitoramento de envio para essas redes
+    if TWITTER_SEND:
+        with open(TWITTER_POSTS_FILE, "r") as twitter_posts_file:
+            twitter_post_list=twitter_posts_file.read().splitlines()
 
-async def monitor_reddit_telegram():
-    return
+    if TELEGRAM_SEND:
+        with open(TELEGRAM_POSTS_FILE, "r") as telegram_posts_file:
+            telegram_post_list=telegram_posts_file.read().splitlines()
 
-async def menu():
-    global REDDIT_TELEGRAM, REDDIT_TWITTER, TWITTER_TELEGRAM, TELEGRAM_TWITTER
-    print("Opções\n",
-          "\t1. Ativar monitoramento Reddit-Telegram\n",
-          "\t2. Ativar monitoramento Reddit-Twitter\n",
-          "\t3. Ativar monitoramento Twitter-Telegram\n",
-          "\t4. Ativar monitoramento Telegram-Twitter\n")
-    
-    op = int(input("Opção: "))
-
-    match op:
-        case 1:
-            print("Ativando monitoramento Reddit-Telegram")
-            REDDIT_TELEGRAM=True
-        case 2:
-            print("Ativando monitoramento Reddit-Twitter")
-            REDDIT_TWITTER=True
-        case 3:
-            print("Ativando monitoramento Twitter-Telegram")
-            TWITTER_TELEGRAM=True
-        case 4:
-            print("Ativando monitoramento Telegram-Twitter")
-            TELEGRAM_TWITTER=True
-        case _:
-            print("Opção inválida. Encerrando programa.")
-            exit()
+    # Monitora o recebimento de novos posts sob condição de poder receber posts
+    if REDDIT_RECEIVE:
+        reddit_posts=reddit.check_posts(config["reddit_limit"])
+        
+        # Se houver posts novos no Reddit, deve executar o passo de envio
+        for post in reddit_posts:
+            if TWITTER_SEND:
+                await twitter_send_macro(post, twitter_post_list)
+            if EMAIL_SEND:
+                email_text=f"Olá,\n\nHá um novo post no Reddit."
+                await mail_send_macro(subject=post["title"], text=email_text)
             
+            """if TELEGRAM_SEND:
+                if post["id"] not in telegram_post_list:
+                    time.sleep()"""
+    return
+    
 
 async def run():
-    if REDDIT_TELEGRAM: await monitor_reddit_telegram()
-    if REDDIT_TWITTER: await monitor_reddit_twitter()
-    if TWITTER_TELEGRAM: await monitor_twitter_telegram()
-    if TELEGRAM_TWITTER: await monitor_telegram_twitter()
+    await monitor()
 
 async def schedule_tasks():
     tempo = 0
@@ -81,7 +73,6 @@ async def schedule_tasks():
             break
 
 async def main():
-    await menu()
     # Agenda a execução da função run
     schedule.every(1).minutes.do(lambda: asyncio.create_task(run()))
     await schedule_tasks()  
