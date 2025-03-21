@@ -2,7 +2,6 @@ import praw
 import requests
 import os
 import json
-import re
 
 # Função para remover caracteres inválidos e extrair somente a parte útil do URL
 def sanitize_filename(filename):
@@ -61,6 +60,7 @@ def check_posts(limit=1):
         print("URL: ", post.url)
 
         saved_media = 0  # Contador de mídia do post
+        media_gallery=[]
 
         # Se o post for uma única imagem
         if post.url.endswith((".jpg", ".jpeg", ".png", ".gif", ".mp4")):
@@ -74,6 +74,7 @@ def check_posts(limit=1):
             with open(media_name, "wb") as media_file:
                 media_file.write(response.content)
             
+            media_gallery.append(media_name)
             saved_media += 1
             print(f"✅ Mídia salva: {media_name}")
         
@@ -95,6 +96,7 @@ def check_posts(limit=1):
                     with open(media_name, "wb") as media_file:
                         media_file.write(response.content)
                     
+                    media_gallery.append(media_name)
                     print(f"✅ Mídia salva: {media_name}")
                 
                 else:
@@ -108,8 +110,9 @@ def check_posts(limit=1):
         UNCHECKED_POSTS.append(
                 {"id":post.id,
                  "author":post.author.name,
-                 "title": post.title,
-                 "content": post.selftext
+                 "content": post.title,
+                 "normalized_content": post.selftext,
+                 "media_gallery":media_gallery
                  })
 
         with open(CHECKED_POSTS_PATH, "a") as checked_posts_file:
