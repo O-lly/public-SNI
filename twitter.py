@@ -1,7 +1,5 @@
 import tweepy, json, os
 
-REDDIT_MEDIA_PATH="media/reddit"
-
 HISTORY_PATH="history/twitter"
 os.makedirs(HISTORY_PATH, exist_ok=True)
 
@@ -35,7 +33,7 @@ client = tweepy.Client(
     access_token_secret=ACCESS_TOKEN_SECRET
 )
 
-def send_post(content="", media_gallery=[]):
+async def send_post(content="", media_gallery=[]):
     media_ids = []
     media_chunks = []
 

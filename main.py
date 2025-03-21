@@ -21,12 +21,26 @@ EMAIL_SEND=config["email_send"]
 async def twitter_send_macro(post, self_posts):
     if post["id"] not in self_posts:
         time.sleep(1)
-        twitter.send_post(post)
+        await twitter.send_post(
+            content=post["content"],
+            media_gallery=post["media_gallery"]
+        )
         with open(TWITTER_POSTS_FILE, "a") as twitter_posts_file:
             twitter_posts_file.write(f"{post['id']}\n")
 
 async def mail_send_macro(subject, text):
     mail.send_email(subject=subject, content=text)
+
+async def telegram_send_macro(post, self_posts):
+    if post["id"] not in self_posts:
+        time.sleep(1)
+        await telegram_acc.send_message(
+            chat_identifier=config["telegram_chat_identifier"],
+            message_text=post["content"],
+            media_gallery=post["media_gallery"]
+        )
+        with open(TELEGRAM_POSTS_FILE, "a") as telegram_posts_file:
+            telegram_posts_file.write(f"{post['id']}\n")
 
 async def monitor():
     twitter_post_list = []
@@ -42,7 +56,7 @@ async def monitor():
 
     # Monitora o recebimento de novos posts sob condição de poder receber posts
     if REDDIT_RECEIVE:
-        reddit_posts=reddit.check_posts(config["reddit_limit"])
+        reddit_posts= await reddit.check_posts(config["reddit_limit"])
         
         # Se houver posts novos no Reddit, deve executar o passo de envio
         for post in reddit_posts:
@@ -50,11 +64,9 @@ async def monitor():
                 await twitter_send_macro(post, twitter_post_list)
             if EMAIL_SEND:
                 email_text=f"Olá,\n\nHá um novo post no Reddit."
-                await mail_send_macro(subject=post["title"], text=email_text)
-            
-            """if TELEGRAM_SEND:
-                if post["id"] not in telegram_post_list:
-                    time.sleep()"""
+                await mail_send_macro(subject=post["content"], text=email_text) 
+            if TELEGRAM_SEND:
+                await telegram_send_macro(post, telegram_post_list)
     return
     
 

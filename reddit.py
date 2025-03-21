@@ -44,7 +44,7 @@ if not os.path.exists(CHECKED_POSTS_PATH):
 checked_posts = set()
 
 # Função para checar posts
-def check_posts(limit=1):
+async def check_posts(limit=1):
     UNCHECKED_POSTS = []
 
     with open(CHECKED_POSTS_PATH, "r") as checked_posts_file:
