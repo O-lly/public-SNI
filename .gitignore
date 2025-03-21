@@ -1,14 +1,10 @@
 # Ignorar a pasta credentials
 credentials/
-
-# Ignorar a pasta reddit_media
-reddit_media/
-
-# Ignorar o arquivo checked_posts
-checked_posts.txt
-
-# Ignorar o arquivo twitter_posted
-twitter_posted.txt
+history/
+media/
+config/
 
 # Ignorar o pycache
 __pycache__/
+
+_test.py
