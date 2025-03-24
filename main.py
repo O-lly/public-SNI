@@ -83,7 +83,6 @@ async def monitor():
 
 
 async def run():
-    # Sua lógica de monitor
     await monitor()
 
 async def main():

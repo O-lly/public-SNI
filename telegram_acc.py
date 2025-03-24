@@ -80,13 +80,13 @@ async def collect_new_posts(chat_identifier, limit=5):
     chat = await client.get_entity(chat_identifier)
     chat_name = chat.title  # Nome do Chat/Grupo
 
-    # Lê os posts já verificados e converte para um conjunto para acesso rápido
+    # Lê os posts já verificados
     with open(CHECKED_POSTS_PATH, "r") as checked_posts_file:
         checked_posts = set(checked_posts_file.read().splitlines())
 
     new_posts = []  # Lista para armazenar novos posts
 
-    # Itera sobre as mensagens do grupo
+    # Itera sobre as mensagens do grupo/chat
     async for message in client.iter_messages(chat, limit):
         if str(message.id) in checked_posts:
             continue  # Ignora mensagens/processadas

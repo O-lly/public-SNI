@@ -8,3 +8,4 @@ config/
 __pycache__/
 
 _test.py
+telegram_bot.py
