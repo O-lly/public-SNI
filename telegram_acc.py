@@ -74,27 +74,53 @@ async def send_message(chat_identifier, message_text="", media_gallery=[]):
     print("✅ Mensagem enviada com sucesso!")
     await end_session()
 
-async def collect_new_posts(chat_identifier, limit=1):
+async def collect_new_posts(chat_identifier, limit=5):
     await start_session()
-    # Obtém a entidade do grupo
+    # Obtém a entidade do grupo/chat
     chat = await client.get_entity(chat_identifier)
+    chat_name = chat.title  # Nome do Chat/Grupo
 
+    # Lê os posts já verificados e converte para um conjunto para acesso rápido
     with open(CHECKED_POSTS_PATH, "r") as checked_posts_file:
-        checked_posts=checked_posts_file.read().splitlines()
+        checked_posts = set(checked_posts_file.read().splitlines())
+
+    new_posts = []  # Lista para armazenar novos posts
 
     # Itera sobre as mensagens do grupo
     async for message in client.iter_messages(chat, limit):
         if str(message.id) in checked_posts:
-            continue
-        print(f"ID da Mensagem: {message.id}")
-        print(f"Texto: {message.text}")
+            continue  # Ignora mensagens/processadas
+        
+        media_gallery=[]
 
+        # Se houver mídia, faz o download de todas as mídias
         if message.media:
-            file_path = await client.download_media(message, file=f"{MEDIA_PATH}/{message.id}")
-            print(f"✅ Mídia salva em: {file_path}")
-        print("-" * 40)
+            def progress_callback(current, total):
+                print(f"Baixando {current}/{total} bytes")
 
-    with open(CHECKED_POSTS_PATH, "a") as checked_posts_file:
-        checked_posts_file.write(f"{message.id}\n")
-    
+            if hasattr(message.media, "documents"):  # Caso seja um álbum
+                for doc in message.media.documents:
+                    file_path = await client.download_media(doc, file=f"{MEDIA_PATH}/{message.id}_{doc.id}", progress_callback=progress_callback)
+                    if file_path:
+                        media_gallery.append(file_path)
+            else:
+                file_path = await client.download_media(message, file=f"{MEDIA_PATH}/{message.id}", progress_callback=progress_callback)
+                if file_path:
+                    media_gallery.append(file_path)
+        
+        with open(CHECKED_POSTS_PATH, "a") as checked_posts_file:
+            checked_posts_file.write(f"{message.id}\n")
+        print(f"Processado post ID: {message.id}")
+
+        new_posts.append(
+            {
+                "id":message.id,
+                "author":chat_name,
+                "content":message.text,
+                "media_gallery":media_gallery
+            }
+        )
+
     await end_session()
+    print("Sessão finalizada")
+    return new_posts
