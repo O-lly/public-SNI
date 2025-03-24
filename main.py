@@ -1,4 +1,4 @@
-import reddit, twitter, mail, schedule, time, os, telegram_acc, asyncio, json
+import reddit, twitter, mail, time, os, telegram_acc, asyncio, json
 
 RUNNING=True
 
@@ -35,7 +35,7 @@ async def telegram_send_macro(post, self_posts):
     if post["id"] not in self_posts:
         time.sleep(1)
         await telegram_acc.send_message(
-            chat_identifier=config["telegram_chat_identifier"],
+            chat_identifier=config["telegram_send_chat_identifier"],
             message_text=post["content"],
             media_gallery=post["media_gallery"]
         )
@@ -56,8 +56,7 @@ async def monitor():
 
     # Monitora o recebimento de novos posts sob condição de poder receber posts
     if REDDIT_RECEIVE:
-        reddit_posts= await reddit.check_posts(config["reddit_limit"])
-        
+        reddit_posts = await reddit.check_posts(config["reddit_filter"], config["reddit_limit"])
         # Se houver posts novos no Reddit, deve executar o passo de envio
         for post in reddit_posts:
             if TWITTER_SEND:
@@ -67,27 +66,42 @@ async def monitor():
                 await mail_send_macro(subject=post["content"], text=email_text) 
             if TELEGRAM_SEND:
                 await telegram_send_macro(post, telegram_post_list)
+
+    if TELEGRAM_RECEIVE:
+        print("oi")
+        telegram_posts = await telegram_acc.collect_new_posts(config["telegram_receive_chat_identifier"], config["telegram_limit"])
+        # Se houver posts novos no Telegram, deve executar o passo de envio
+        print("Recebe do telegram")
+        print(telegram_posts)
+        for post in telegram_posts:
+            if TWITTER_SEND:
+                await twitter_send_macro(post, twitter_post_list)
+            if EMAIL_SEND:
+                email_text=f"Olá,\n\nHá um novo post no Telegram."
+                await mail_send_macro(subject=post["author"], text=email_text)
     return
-    
+
 
 async def run():
+    # Sua lógica de monitor
     await monitor()
 
-async def schedule_tasks():
-    tempo = 0
-    while RUNNING:
-        tempo += 1
-        schedule.run_pending()
-        await asyncio.sleep(1)
-        if tempo % 10 == 0:
-            print(f"Tempo: {tempo} segundos.")
-        if tempo == 200:
-            break
-
 async def main():
-    # Agenda a execução da função run
-    schedule.every(1).minutes.do(lambda: asyncio.create_task(run()))
-    await schedule_tasks()  
+    while RUNNING:
+        start_time = time.time()
+
+        print("🔄 Iniciando rotina...")
+        await run()
+        print("✅ Rotina finalizada.")
+
+        # Espera 600 segundos (10 minutos) a partir do término da rotina
+        elapsed = time.time() - start_time
+        wait_time = 600 - elapsed
+        if wait_time > 0:
+            print(f"⏳ Aguardando {int(wait_time)}s até a próxima execução.")
+            await asyncio.sleep(wait_time)
+        else:
+            print("⚠️ A execução demorou mais que 600s. Iniciando próxima imediatamente.")
 
 if __name__ == "__main__":
-    asyncio.run(main())  # ✅ Chama `asyncio.run()` apenas aqui
+    asyncio.run(main())
