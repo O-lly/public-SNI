@@ -45,7 +45,7 @@ checked_posts = set()
 
 # Função para checar posts
 async def check_posts(reddit_filter, limit=1):
-    UNCHECKED_POSTS = []
+    new_posts = []
 
     with open(CHECKED_POSTS_PATH, "r") as checked_posts_file:
         checked_posts=checked_posts_file.read().splitlines()
@@ -116,7 +116,7 @@ async def check_posts(reddit_filter, limit=1):
         
         print("-" * 30)
 
-        UNCHECKED_POSTS.append(
+        new_posts.append(
                 {"id":post.id,
                  "author":post.author.name,
                  "content": post.title,
@@ -127,4 +127,4 @@ async def check_posts(reddit_filter, limit=1):
         with open(CHECKED_POSTS_PATH, "a") as checked_posts_file:
             checked_posts_file.write(post.id + "\n")
 
-    return UNCHECKED_POSTS
+    return new_posts
