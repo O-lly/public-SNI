@@ -44,14 +44,23 @@ if not os.path.exists(CHECKED_POSTS_PATH):
 checked_posts = set()
 
 # Função para checar posts
-async def check_posts(limit=1):
+async def check_posts(reddit_filter, limit=1):
     UNCHECKED_POSTS = []
 
     with open(CHECKED_POSTS_PATH, "r") as checked_posts_file:
         checked_posts=checked_posts_file.read().splitlines()
 
-    for post in subreddit.hot(limit=limit):
+    # Escolha o filtro condicionalmente
+    if reddit_filter == "new":
+        posts = subreddit.new(limit=limit)
+    elif reddit_filter == "top":
+        posts = subreddit.top(limit=limit)
+    elif reddit_filter == "rising":
+        posts = subreddit.rising(limit=limit)
+    else:
+        posts = subreddit.hot(limit=limit)  # Valor padrão
 
+    for post in posts:
         if post.id in checked_posts:
             print(f"Post já visualizado: {post.id}")
             continue # Ignora posts já vistos
